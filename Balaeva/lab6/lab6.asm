@@ -1,6 +1,38 @@
 CODE SEGMENT
- ASSUME CS:CODE, DS:DATA, ES:DATA, SS:ASTACK
+ASSUME  DS:CODE, CS:CODE, SS:CODE, ES:CODE
+ ORG 100H
 START: JMP BEGIN
+; ДАННЫЕ
+	er db 'Ошибка: $'
+	er1 db 'Номер функции неверен$'
+	er2 db 'Файл не найден$'
+	er7 db 'Разрушен управляющий блок памяти$'
+	er8 db 'Недостаточный объем памяти$'
+	er9 db 'Неверный адрес блока памяти$'
+	er10 db 'Неправильная строка среды$'
+	er11 db 'Неправильный формат$'
+	
+	; причины завершения
+	end0 db 'Нормальное завершение$'
+	end1 db 'Завершение по Ctrl-Break$'
+	end2 db 'Завершение по ошибке устройства$'
+	end3 db 'Завершение по функции 31h$'
+	end_cod db 'Код завершения: $'
+	t_code  db 0	
+	STRENDL db 0DH,0AH,'$'
+	
+	; блок параметров
+	ARG 	dw 0 ; сегментный адрес среды
+			dd 0 ; сегмент и смещение командной строки
+			dd 0 ; сегмент и смещение первого FCB
+			dd 0 ; сегмент и смещение второго FCB
+	
+	; путь и имя вызываемой программы	
+	PROGR db 40h dup (0)
+	; переменные для хранения SS и SP
+	KEEP_SS dw 0
+	KEEP_SP dw 0
+	TStack  db 100h dup(0) 
 ; ПРОЦЕДУРЫ
 ;---------------------------------------
 TETR_TO_HEX PROC near
@@ -33,12 +65,12 @@ PRINT PROC
 PRINT ENDP
 ;---------------------------------------
 PREP PROC
-	mov ax,ASTACK
-	sub ax,CODE
-	add ax,100h
-	mov bx,ax
-	mov ah,4ah
-	int 21h
+	 mov BX,offset prog_end   
+     mov cl, 4    
+     shr bx,cl
+     inc bx
+     mov ah,4Ah
+     int 21h
 	jnc PREP_skip1
 		call PROC_ER
 	PREP_skip1:
@@ -83,11 +115,11 @@ PREP PROC
 	add si,1
 	mov PROGR[si],'.'
 	add si,1
-	mov PROGR[si],'e'
+	mov PROGR[si],'c'
 	add si,1
-	mov PROGR[si],'x'
+	mov PROGR[si],'o'
 	add si,1
-	mov PROGR[si],'e'
+	mov PROGR[si],'m'
 	pop ax
 	pop si
 	pop bx
@@ -119,13 +151,13 @@ START_MOD PROC
 	
 	
 	mov ax,4B00h
-	int 21h
+	mov al, 0h
+    int 21h
 	
 	
-	push ax
-	mov ax,DATA
-	mov ds,ax
-	pop ax
+	mov cx, cs
+    mov ds, cx
+    mov es, cx
 	mov SS,KEEP_SS
 	mov SP,KEEP_SP
 	jnc START_MOD_skip1
@@ -229,48 +261,13 @@ ENTER_END PROC
 ENTER_END ENDP
 ;---------------------------------------
 BEGIN:
-	mov ax,data
-	mov ds,ax
+	mov sp, offset TStack
+    add sp, 100h
 	call PREP
 	call START_MOD
 	xor AL,AL
 	mov AH,4Ch
 	int 21H
+prog_end:
 CODE ENDS
-; ДАННЫЕ
-DATA SEGMENT	
-	er db 'Ошибка: $'
-	er1 db 'Номер функции неверен$'
-	er2 db 'Файл не найден$'
-	er7 db 'Разрушен управляющий блок памяти$'
-	er8 db 'Недостаточный объем памяти$'
-	er9 db 'Неверный адрес блока памяти$'
-	er10 db 'Неправильная строка среды$'
-	er11 db 'Неправильный формат$'
-	
-	; причины завершения
-	end0 db 'Нормальное завершение$'
-	end1 db 'Завершение по Ctrl-Break$'
-	end2 db 'Завершение по ошибке устройства$'
-	end3 db 'Завершение по функции 31h$'
-	end_cod db 'Код завершения: $'
-	t_code  db 0	
-	STRENDL db 0DH,0AH,'$'
-	
-	; блок параметров
-	ARG 	dw 0 ; сегментный адрес среды
-			dd 0 ; сегмент и смещение командной строки
-			dd 0 ; сегмент и смещение первого FCB
-			dd 0 ; сегмент и смещение второго FCB
-	
-	; путь и имя вызываемой программы	
-	PROGR db 40h dup (0)
-	; переменные для хранения SS и SP
-	KEEP_SS dw 0
-	KEEP_SP dw 0
-DATA ENDS
-; СТЕК
-ASTACK SEGMENT STACK
-	dw 100h dup (?)
-ASTACK ENDS
  END START
