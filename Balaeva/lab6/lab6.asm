@@ -207,20 +207,25 @@ ENTER_END PROC
 	jne ENTER_END_skip
 
 	; печать кода завершения:
-	call BYTE_TO_HEX
-	push ax
-	mov ah,02h
 	mov dl,al
-	int 21h
-	pop ax
-	mov dl,ah
 	mov ah,02h
 	int 21h
+
+;call BYTE_TO_HEX
+;	push ax
+;	mov ah,02h
+;	mov dl,al
+;	int 21h
+;	pop ax
+;	mov dl,ah
+;	mov ah,02h
+;	int 21h
 	mov dx,offset STRENDL
 	call PRINT
 	ENTER_END_skip:
 	
 	ret
+
 ENTER_END ENDP
 ;---------------------------------------
 BEGIN:
@@ -249,7 +254,7 @@ DATA SEGMENT
 	end2 db 'Завершение по ошибке устройства$'
 	end3 db 'Завершение по функции 31h$'
 	end_cod db 'Код завершения: $'
-		
+	t_code  db 0	
 	STRENDL db 0DH,0AH,'$'
 	
 	; блок параметров
